@@ -13,15 +13,19 @@
 #include <Arduino.h>
 #include <M5Stack.h>
 #include <ArduinoJson.h>
+#include "WiFi.h"
 
 class WifiJson
 {
 public:
     WifiJson(bool setSilent = false);
     bool begin(const char* filename);
+    IPAddress ip;
 
 private:
     bool silent;
+    bool known = false;
+    int status = WL_IDLE_STATUS;
 
     File jsonSource;
     String jsonString;
