@@ -172,7 +172,6 @@ bool WifiJson::matchSSID()
 
                     if (connect(v[0].as<String>().c_str(), v[1].as<String>().c_str()))
                     {
-                        ip = WiFi.localIP();
                         return true;
                     }
                 }
@@ -203,41 +202,54 @@ bool WifiJson::matchSSID()
     }
 }
 
-bool WifiJson::connect(const char* ssid[], const char* password[])
+bool WifiJson::connect(const char *ssid, const char *password)
 {
+    WiFi.disconnect();
+    timeout = 10;
+    delay(100);
+
     if (!silent)
     {
         M5.Lcd.print("Connecting to ");
         M5.Lcd.print(ssid);
     }
-    for (int attempts = 0; attempts < 10; ++attempts)
-    {
-        status = WiFi.begin(ssid, password);
-        Serial.println("Connection attempt: " + attempts);
 
-        if (status != WL_CONNECTED)
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        if (WiFi.status() == WL_CONNECT_FAILED || timeout == 0)
         {
-            if (status == WL_CONNECT_FAILED)
+            // If so break loop and notify user
+            if (!silent)
             {
-                // If so break loop and notify user
-                Serial.println("Connection failure, check password and DHCP settings");
-                M5.Lcd.println("Connection failure, check password and DHCP settings");
-                return false;
+                M5.Lcd.println("\nConnection failure, check password and DHCP settings");
             }
-            else
-            {
-                // If not, wait a second and try again
-                M5.Lcd.print(".");
-                delay(1000);
-            }
+            Serial.println("\nConnection failure, check password and DHCP settings");
+            return false;
         }
         else
         {
-            // Return true if so
-            Serial.println("Connection succesfull.");
-            M5.Lcd.println(" OK");
-            return true;
+            // If not, wait a second and try again
+            if (!silent)
+            {
+                M5.Lcd.print(".");
+            }
+
+            timeout = timeout - 1;
+            delay(1000);
         }
     }
-    return false;
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        // Return true if so
+        ip = WiFi.localIP().toString();
+        if (!silent)
+        {
+            M5.Lcd.println(" OK");
+        }
+        Serial.println("Connection succesfull.");
+        return true;
+    }
 }

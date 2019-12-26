@@ -20,12 +20,12 @@ class WifiJson
 public:
     WifiJson(bool setSilent = false);
     bool begin(const char* filename);
-    IPAddress ip;
+    String ip;
 
 private:
     bool silent;
     bool known = false;
-    int status = WL_IDLE_STATUS;
+    int timeout = 10;
 
     File jsonSource;
     String jsonString;
@@ -34,7 +34,7 @@ private:
     bool initSD();
     bool readJson(const char* filename);
     bool matchSSID();
-    bool connect();
+    bool connect(const char* ssid, const char* password);
 };
 
 #endif
