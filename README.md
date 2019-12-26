@@ -15,4 +15,4 @@ A library that reads WiFi credentials from your SD card and connects to a the ne
 ]`
 
 #### Known issues
-- It does not work at all at this point
+- The json file has a file size limit of 500 bytes, the amount of networks you will be able to store entirely depends on the length of the passwords. 

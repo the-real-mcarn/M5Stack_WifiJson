@@ -30,6 +30,7 @@ private:
     File jsonSource;
     String jsonString;
     StaticJsonDocument<500> json;
+    JsonArray wifiArray;
 
     bool initSD();
     bool readJson(const char* filename);

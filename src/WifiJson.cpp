@@ -6,13 +6,9 @@
 
 WifiJson::WifiJson(bool setSilent)
 {
-    // Initialise M5Stack if it hasn't been done yet
     M5.begin();
-
-    // Set global variables
     silent = setSilent;
 
-    // Free advertising
     if (!silent)
     {
         M5.Lcd.println("M5Stack_WifiJson by McArn \n");
@@ -28,11 +24,6 @@ bool WifiJson::begin(const char *filename)
         {
             if (matchSSID())
             {
-                if (!silent)
-                {
-                    M5.Lcd.println("Connection established!");
-                }
-                Serial.println("Connection established!");
                 return true;
             }
             else
@@ -53,7 +44,6 @@ bool WifiJson::begin(const char *filename)
 
 bool WifiJson::initSD()
 {
-    // Initialise SD card
     if (!silent)
     {
         M5.Lcd.print("SD Initialising... ");
@@ -85,23 +75,14 @@ bool WifiJson::readJson(const char *filename)
         if (!silent)
         {
             M5.Lcd.print("File: ");
-        }
-        Serial.print("File: ");
-        if (!silent)
-        {
             M5.Lcd.print(jsonSource.name());
-        }
-        Serial.print(jsonSource.name());
-
-        if (!silent)
-        {
             M5.Lcd.print("  Size: ");
-        }
-        Serial.print("  Size: ");
-        if (!silent)
-        {
             M5.Lcd.println(jsonSource.size());
         }
+
+        Serial.print("File: ");
+        Serial.print(jsonSource.name());
+        Serial.print("  Size: ");
         Serial.println(jsonSource.size());
 
         while (jsonSource.available())
@@ -112,6 +93,19 @@ bool WifiJson::readJson(const char *filename)
         deserializeJson(json, jsonString);
         jsonSource.close();
 
+        wifiArray = json.as<JsonArray>();
+
+        if (!silent)
+        {
+            M5.Lcd.println("Known networks:");
+            for (JsonVariant v : wifiArray)
+            {
+                M5.Lcd.print(v[0].as<String>().c_str());
+                M5.Lcd.print(" ");
+            }
+            M5.Lcd.println("\n");
+        }
+
         return true;
     }
     else
@@ -119,12 +113,9 @@ bool WifiJson::readJson(const char *filename)
         if (!silent)
         {
             M5.Lcd.print(filename);
-        }
-        Serial.print(filename);
-        if (!silent)
-        {
             M5.Lcd.println(" does not exist.");
         }
+        Serial.print(filename);
         Serial.println(" does not exist.");
 
         return false;
@@ -137,14 +128,12 @@ bool WifiJson::matchSSID()
     WiFi.disconnect();
     delay(100);
 
-    JsonArray wifiArray = json.as<JsonArray>();
-
-    // Start scan
     if (!silent)
     {
         M5.Lcd.print("WiFi scan started...");
     }
     Serial.print("WiFi scan started...");
+
     int n = WiFi.scanNetworks();
 
     if (!silent)
@@ -158,17 +147,15 @@ bool WifiJson::matchSSID()
         for (size_t i = 0; i < n; i++)
         {
             Serial.println("Found " + WiFi.SSID(i));
-            // Match SSID to those in wifi.json
             for (JsonVariant v : wifiArray)
             {
                 Serial.print("   Match " + v[0].as<String>());
                 if (WiFi.SSID(i) == v[0])
                 {
-                    // Set known to true
                     known = true;
 
                     Serial.println(" - True");
-                    Serial.println(v[1].as<String>().c_str());
+                    Serial.println("Using credentials:  " + v[0].as<String>() + " : " + v[1].as<String>());
 
                     if (connect(v[0].as<String>().c_str(), v[1].as<String>().c_str()))
                     {
@@ -220,7 +207,6 @@ bool WifiJson::connect(const char *ssid, const char *password)
     {
         if (WiFi.status() == WL_CONNECT_FAILED || timeout == 0)
         {
-            // If so break loop and notify user
             if (!silent)
             {
                 M5.Lcd.println("\nConnection failure, check password and DHCP settings");
@@ -230,7 +216,6 @@ bool WifiJson::connect(const char *ssid, const char *password)
         }
         else
         {
-            // If not, wait a second and try again
             if (!silent)
             {
                 M5.Lcd.print(".");
@@ -243,7 +228,6 @@ bool WifiJson::connect(const char *ssid, const char *password)
 
     if (WiFi.status() == WL_CONNECTED)
     {
-        // Return true if so
         ip = WiFi.localIP().toString();
         if (!silent)
         {
