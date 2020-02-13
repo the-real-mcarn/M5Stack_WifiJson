@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 #include "WiFi.h"
 #include "WifiJson.h"
+#include "esp_wpa2.h"
 
 WifiJson::WifiJson(bool setSilent)
 {
@@ -149,17 +150,31 @@ bool WifiJson::matchSSID()
             Serial.println("Found " + WiFi.SSID(i));
             for (JsonVariant v : wifiArray)
             {
-                Serial.print("   Match " + v[0].as<String>());
+                Serial.print("   Match " + v[0].as<String>());                
                 if (WiFi.SSID(i) == v[0])
                 {
                     known = true;
-
                     Serial.println(" - True");
-                    Serial.println("Using credentials:  " + v[0].as<String>() + " : " + v[1].as<String>());
 
-                    if (connect(v[0].as<String>().c_str(), v[1].as<String>().c_str()))
+                    if (v[2])
                     {
-                        return true;
+                        // Enterprise Network
+                        Serial.print(" (Enterprise Network)");
+                        Serial.println("Using credentials:  " + v[2].as<String>() + " : " + v[1].as<String>());
+                        
+                        if ( connect( v[0].as<String>().c_str(), v[1].as<String>().c_str(), v[1].as<String>().c_str() ) )
+                        {
+                            return true;
+                        }
+                    } else {
+                        // Personal Network
+                        Serial.print(" (Personal Network)");
+                        Serial.println("Using credentials:  " + v[1].as<String>());
+
+                        if ( connect( v[0].as<String>().c_str(), v[1].as<String>().c_str() ) )
+                        {
+                            return true;
+                        }
                     }
                 }
                 else
@@ -189,7 +204,7 @@ bool WifiJson::matchSSID()
     }
 }
 
-bool WifiJson::connect(const char *ssid, const char *password)
+bool WifiJson::connect(const char *ssid, const char *password, const char *username)
 {
     WiFi.disconnect();
     timeout = 10;
@@ -201,7 +216,31 @@ bool WifiJson::connect(const char *ssid, const char *password)
         M5.Lcd.print(ssid);
     }
 
-    WiFi.begin(ssid, password);
+    if (username == "")
+    {
+        // WPA Personal
+        if (!silent)
+        {
+            M5.Lcd.print(" (WPA Personal)");
+        }
+
+        WiFi.begin(ssid, password);
+    } else {
+        // WPA Enterprise
+        if (!silent)
+        {
+            M5.Lcd.print(" (WPA Enterprise)");
+        }
+
+        esp_wpa2_config_t config = WPA2_CONFIG_INIT_DEFAULT();
+        esp_wifi_sta_wpa2_ent_set_username((uint8_t *)username, strlen(username));
+        esp_wifi_sta_wpa2_ent_set_password((uint8_t *)password, strlen(password));
+        esp_wifi_sta_wpa2_ent_enable(&config);
+        WiFi.begin(ssid);
+    }
+    
+
+    
 
     while (WiFi.status() != WL_CONNECTED)
     {

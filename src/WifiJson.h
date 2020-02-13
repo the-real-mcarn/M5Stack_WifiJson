@@ -14,6 +14,7 @@
 #include <M5Stack.h>
 #include <ArduinoJson.h>
 #include "WiFi.h"
+#include "esp_wpa2.h"
 
 class WifiJson
 {
@@ -35,7 +36,7 @@ private:
     bool initSD();
     bool readJson(const char* filename);
     bool matchSSID();
-    bool connect(const char* ssid, const char* password);
+    bool connect(const char* ssid, const char* password, const char* username = "");
 };
 
 #endif
