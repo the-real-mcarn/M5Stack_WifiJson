@@ -30,7 +30,7 @@ private:
 
     File jsonSource;
     String jsonString;
-    StaticJsonDocument<500> json;
+    StaticJsonDocument<750> json;
     JsonArray wifiArray;
 
     bool initSD();

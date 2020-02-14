@@ -162,7 +162,7 @@ bool WifiJson::matchSSID()
                         Serial.print(" (Enterprise Network)");
                         Serial.println("Using credentials:  " + v[2].as<String>() + " : " + v[1].as<String>());
                         
-                        if ( connect( v[0].as<String>().c_str(), v[1].as<String>().c_str(), v[1].as<String>().c_str() ) )
+                        if ( connect( v[0].as<String>().c_str(), v[1].as<String>().c_str(), v[2].as<String>().c_str() ) )
                         {
                             return true;
                         }
